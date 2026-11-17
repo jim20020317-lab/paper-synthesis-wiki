@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paper Bottleneck × Solution Wiki | 論文瓶頸萃取與組合知識庫</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <a href="#papers" class="brand-link">
+          <span class="brand-badge">LLM Wiki</span>
+          <h1>論文「瓶頸 × 解法」組合知識庫</h1>
+        </a>
+        <p class="brand-subtitle">
+          從 Chiplet / CIM / NoP 論文中萃取 <strong>研究瓶頸</strong> 與 <strong>核心解法</strong>，重組為可延伸的新論文架構
+        </p>
+      </div>
+      <div class="stats-pill" id="stats-pill">載入知識庫中...</div>
+    </div>
+
+    <nav class="main-nav">
+      <div class="container nav-tabs" role="tablist">
+        <a href="#papers" class="nav-tab active" data-view="papers">📄 論文卡片庫</a>
+        <a href="#matrix" class="nav-tab" data-view="matrix">📊 瓶頸 × 解法矩陣</a>
+        <a href="#syntheses" class="nav-tab" data-view="syntheses">🔗 跨論文融合構想</a>
+        <a href="#mixer" class="nav-tab" data-view="mixer">🧪 瓶頸組合實驗室</a>
+        <a href="#rules" class="nav-tab" data-view="rules">📐 AGENTS.md 規則</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container main-content">
+    <section id="toolbar" class="toolbar">
+      <div class="search-box">
+        <input
+          type="search"
+          id="search-input"
+          placeholder="搜尋論文標題、瓶頸關鍵字（如 ReRAM、D2D、DMA、rewrite）或標籤..."
+          aria-label="搜尋知識庫"
+        />
+      </div>
+      <div class="filter-row" id="category-filters"></div>
+    </section>
+
+    <section id="app-view" class="app-view" aria-live="polite"></section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>由 <code>entries/*.md</code> 經 <code>scripts/build_wiki.py</code> 自動編譯至 <code>data/wiki.json</code></span>
+      <span>遵循 <a href="#rules">AGENTS.md</a> 開發規範 · Pure Static Site for GitHub Pages</span>
+    </div>
+  </footer>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

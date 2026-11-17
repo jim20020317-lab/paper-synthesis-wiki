@@ -1,0 +1,552 @@
+{
+  "meta": {
+    "title": "Paper Bottleneck × Solution Synthesis Wiki",
+    "generated_at": "2026-11-17T05:57:36Z",
+    "paper_count": 8,
+    "synthesis_count": 2,
+    "tags": [
+      "array-utilization",
+      "attention",
+      "broadcast",
+      "chiplet",
+      "cim",
+      "co-exploration",
+      "communication-aware",
+      "communication-model",
+      "compute-write-parallelism",
+      "cost-model",
+      "cross-layer-scheduling",
+      "d2d",
+      "dcim",
+      "dma",
+      "edge",
+      "evaluator",
+      "gemini",
+      "kv-cache",
+      "latency-hiding",
+      "llm",
+      "mapping",
+      "mcm",
+      "memory-mapping",
+      "miqp",
+      "mixed-stationary",
+      "multi-model",
+      "multimodal-transformer",
+      "nop",
+      "photonic-interconnect",
+      "ping-pong",
+      "pipelining",
+      "reram",
+      "reram-imc",
+      "scheduling",
+      "simulated-annealing",
+      "sram-cim",
+      "token-grained-pipelining",
+      "transformer",
+      "ucie",
+      "wafer-scale",
+      "weight-rewrite"
+    ]
+  },
+  "papers": [
+    {
+      "id": "comet-hpca2026",
+      "title": "COMET: 面向 MCM 細粒度 AI 推理的通信與記憶體協同設計",
+      "venue": "IEEE HPCA 2026",
+      "category": "Communication & Memory Co-Design",
+      "tags": [
+        "chiplet",
+        "mcm",
+        "dma",
+        "communication-model",
+        "memory-mapping",
+        "ucie"
+      ],
+      "bottleneck_summary": "細粒度 PE 級 DMA 請求（< 1MB）在傳統 bulk-oriented DMA 設計下協議與排隊開銷過大，導致頻寬利用率低與高延遲。",
+      "solution_summary": "建立涵蓋 DMA 全生命週期的細粒度通信模型，結合 DMA 請求聚合（Coalescing）與工作負載自適應記憶體位址映射。",
+      "combinable_modules": [
+        "DMA 全生命週期通信模型",
+        "多 PE 細粒度 DMA 請求聚合",
+        "工作負載自適應位址映射"
+      ],
+      "related": [
+        "gemini-hpca2024",
+        "pics-tcad2026",
+        "nop-latency-hiding-synthesis"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "paper",
+      "source_file": "entries/papers/comet-hpca2026.md",
+      "sections": [
+        {
+          "heading": "研究瓶頸 (Bottleneck)",
+          "content": "- **理想化通信模型失真**：既有 chiplet 映射工具多假設均勻的大量資料搬移，忽略小 batch 推理下 PE 級突發且小於 1MB 的細粒度 DMA 請求。\n- **協議開銷與位址碎片**：未經聚合的小 DMA 請求反覆觸發中斷、控制路徑路由與 DMA controller 排隊，嚴重拉低 UCIe/NoP 實際頻寬利用率。"
+        },
+        {
+          "heading": "核心解法 (Solution)",
+          "content": "- **DMA 全生命週期建模**：首次精確建模通知產生（$T_{\\text{generate}}$）、片上控制路由（$H_i \\cdot \\lambda_{\\text{hop}}$）、DMA 控制器排隊（$\\tau_i^q$）與 UCIe $\\alpha$-$\\beta$ 傳輸模型（$\\alpha = 8\\text{ns}$）。\n- **DMA 請求聚合（Coalescing）**：將來自多個 PE 的零碎 DMA 傳輸合併為大批量傳輸，攤銷固定協議開銷。\n- **自適應記憶體位址映射**：針對 CNN（強同步、需對齊寫回）與 Transformer MHA（head 獨立、排程自由度高）切換不同位址映射策略，並以 `gemini-hpca2024` 作為初始映射器再進行 DAG DP 排程。"
+        },
+        {
+          "heading": "關鍵實驗數據",
+          "content": "- 8×8 Mesh chiplet 架構評估（對比傳統 chiplet 通信）：達成 **1.1×–2.6× speedup** 與 **1.5×–4.4× bandwidth utilization** 提升。\n- 並在 Intel Agilex 7 I-Series FPGA 上完成硬體實測驗證 DMA 延遲分解。"
+        },
+        {
+          "heading": "可組合模組 (Combinable Modules)",
+          "content": "- **Gemini + COMET 兩階段管線**：完美示範如何用 `gemini-hpca2024` 做粗粒度空間映射，再接上 COMET 做細粒度 DMA 聚合與位址對齊。\n- **PE 級工藝/熱擾動因子 $\\delta_{c,p}$**：可與良率/偏差感知的映射研究結合。"
+        },
+        {
+          "heading": "關聯條目",
+          "content": "- 直接引用並延伸 `gemini-hpca2024` 的映射結果。\n- 在 `nop-latency-hiding-synthesis` 中補足「微觀傳輸聚合與記憶體對齊」的最後一哩路。"
+        }
+      ]
+    },
+    {
+      "id": "eta-apccas2025",
+      "title": "ETA: 面向 ReRAM-CIM 的高效率 Transformer Attention 映射",
+      "venue": "IEEE APCCAS 2025",
+      "category": "CIM Attention Mapping",
+      "tags": [
+        "reram",
+        "cim",
+        "transformer",
+        "attention",
+        "compute-write-parallelism",
+        "array-utilization"
+      ],
+      "bottleneck_summary": "ReRAM-CIM 計算 Attention 時面臨頻繁中間資料寫入與 Compute-Write-Compute (CWC) 串行依賴，且矩陣映射常留下閒置陣列欄。",
+      "solution_summary": "將 V 與 X^T 分存不同陣列以重疊寫入與計算，並透過 Array-aware 水平拼接 W_Q 與 W_V 提升陣列利用率。",
+      "combinable_modules": [
+        "計算與寫入跨陣列重疊 (CWC 解耦)",
+        "Array-Aware 權重矩陣水平拼接"
+      ],
+      "related": [
+        "halo-25d-llm",
+        "streamdcim-2025",
+        "gemini-dcim-adaptation"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "paper",
+      "source_file": "entries/papers/eta-apccas2025.md",
+      "sections": [
+        {
+          "heading": "研究瓶頸 (Bottleneck)",
+          "content": "- **CWC 串行阻塞**：傳統方案（如 ReBERT）依序生成並寫入 $K^T$ 與 $V$，寫入期間後續計算全面停擺。\n- **二次方儲存爆炸或雙向存取依賴**：部分前作需預存隨模型維度二次方增長的 $W_S = W_Q W_K^T$，或依賴特殊 dual-access ReRAM。\n- **陣列欄利用率低**：當 CIM 陣列欄數大於單一 head 維度 $d_h$ 時，分開映射 $W_Q$ 與 $W_V$ 會留下大量閒置欄。"
+        },
+        {
+          "heading": "核心解法 (Solution)",
+          "content": "- **跨陣列計算/寫入重疊**：先算 $R = Q W_K^T$ 的同時，並行將 $V$ 與 $X^T$ 寫入不同陣列，再計算 $O = R X^T$，避免顯式生成與寫入 $K^T$，打破 CWC 串行鏈。\n- **Array-Aware 水平拼接**：構造水平拼接矩陣 $W_C = C(W_Q, W_V)$，讓單次 $X W_C$ 同時產出 $Q$ 與 $V$，消滅閒置陣列欄並減少運算區塊。"
+        },
+        {
+          "heading": "關鍵實驗數據",
+          "content": "- 在 DeiT-small 與 GPT2-small 模擬中：最高減少 **66% waiting-for-write** 延遲與 **20% attention-block latency**。\n- 在 `64×64` 陣列規格下：最高減少 **29% 所需 CIM 陣列數**。"
+        },
+        {
+          "heading": "可組合模組 (Combinable Modules)",
+          "content": "- **Array-Aware 水平拼接**：此最佳化**與 ReRAM 物理特性無關**，只要 SRAM-DCIM macro 同樣具備固定行列尺寸，即可無痛遷移以提升 macro 利用率。\n- **跨陣列寫入重疊**：可與 `streamdcim-2025` 的 tile 級 ping-pong 機制結合，從「macro 內部」與「跨 macro 排程」雙層面同時遮蔽寫入延遲。"
+        },
+        {
+          "heading": "關聯條目",
+          "content": "- 與 `streamdcim-2025` 共同為 `gemini-dcim-adaptation` 提供寫入延遲隱藏與陣列利用率提升的硬體技術選項。\n- 與 `halo-25d-llm` 形成對比：HALO 選擇以 CMOS 迴避 ReRAM 寫入，ETA 則在 CIM 內部重排計算順序以隱藏寫入。"
+        }
+      ]
+    },
+    {
+      "id": "gemini-hpca2024",
+      "title": "Gemini: 大規模 DNN Chiplet 加速器的架構與映射聯合探索框架",
+      "venue": "IEEE HPCA 2024",
+      "category": "Mapping & DSE Framework",
+      "tags": [
+        "chiplet",
+        "mapping",
+        "co-exploration",
+        "d2d",
+        "simulated-annealing",
+        "evaluator"
+      ],
+      "bottleneck_summary": "Layer-Pipeline 空間映射搜尋空間呈指數爆炸，且昂貴的跨 chiplet D2D 通信（高能耗、低頻寬）嚴重制約系統效能。",
+      "solution_summary": "提出 layer-centric 的 LMS 三元組編碼，搭配 5 種結構化 SA 算子與雙層 Roofline/MC 評估器進行架構-映射聯合搜尋。",
+      "combinable_modules": [
+        "LMS 三元組編碼 (Part/CG/FD)",
+        "5 種結構化 SA 算子",
+        "雙層 Energy-Delay-MC 評估器"
+      ],
+      "related": [
+        "halo-25d-llm",
+        "streamdcim-2025",
+        "comet-hpca2026",
+        "ouroboros-asplos2026",
+        "gemini-dcim-adaptation"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "paper",
+      "source_file": "entries/papers/gemini-hpca2024.md",
+      "sections": [
+        {
+          "heading": "研究瓶頸 (Bottleneck)",
+          "content": "- **LP SPM 搜尋空間龐大**：對於 $C$ 個 core、$L$ 層的 DNN，切分與 core group 排列組合遠超窮舉極限，現有 heuristic 難以找到全域近優解。\n- **D2D 通信代價高昂**：跨 chiplet 的 Die-to-Die (D2D) 互連相較片內 NoC 具有更低頻寬與更高能耗（clock-forwarding 與 always-on SerDes 差異顯著）。"
+        },
+        {
+          "heading": "核心解法 (Solution)",
+          "content": "- **LMS 編碼（Layer Mapping Scheme）**：將每層映射形式化為三元組 $LMS_i = (Part_i, CG_i, FD_i)$，分別控制 H/W/B/K 維度切分、Core Group 分配（決定走 NoC 或 D2D）與 DRAM 資料流向。\n- **5 種針對性 SA 算子（OP1–OP5）**：包含 Partition 微調、CG 交換、CG 合併/拆分、FD 重定向與 Layer 重排，能快速將高流量 cluster 物理聚集。\n- **雙層 Evaluator**：結合 Intra-core Evaluator（類似小型 Timeloop）與 Global Evaluator，同時最佳化 $MC^\\alpha \\times E^\\beta \\times D^\\gamma$（貨幣成本、能耗、延遲）。"
+        },
+        {
+          "heading": "關鍵實驗數據",
+          "content": "- 相較 SOTA（Simba + Tangram LP mapping）：平均達成 **1.98× 效能提升** 與 **1.41× 能效提升**，而貨幣成本（MC）僅增加 **14.3%**。\n- 揭示 chiplet 粒度權衡：適度切分有利，過度細分會同時惡化 MC、效能與能效。"
+        },
+        {
+          "heading": "可組合模組 (Combinable Modules)",
+          "content": "- **LMS 編碼與 SA 算子**：屬於與底層運算單元解耦的跨核映射骨架，可直接套用到 DCIM、Wafer-scale 或作為 `comet-hpca2026` 的初始映射器。\n- **可替換的 Intra-core Evaluator**：當底層換成固定資料流的 DCIM 時，可將其簡化為查表模型。"
+        },
+        {
+          "heading": "關聯條目",
+          "content": "- `comet-hpca2026` 直接採用 Gemini 產生初始 layer-to-chiplet mapping，再進一步最佳化細粒度 DMA 排程。\n- `gemini-dcim-adaptation` 詳細推導如何將 Gemini 改造並適配至 Multi-DCIM Chiplet 系統。"
+        }
+      ]
+    },
+    {
+      "id": "halo-25d-llm",
+      "title": "HALO: 異構 2.5D Chiplet 邊緣端 LLM 推理系統",
+      "venue": "IEEE JETCAS 2024",
+      "category": "2.5D Chiplet / IMC",
+      "tags": [
+        "chiplet",
+        "reram-imc",
+        "nop",
+        "communication-aware",
+        "llm",
+        "edge"
+      ],
+      "bottleneck_summary": "ReRAM 寫入延遲與能耗過高且易損壞單元（不適合動態矩陣），且跨 chiplet NoP 通信佔總延遲達 62%。",
+      "solution_summary": "採用 ReRAM-IMC + CMOS 異構 chiplet 分工，搭配 branch-and-bound 通信感知映射演算法。",
+      "combinable_modules": [
+        "ReRAM/CMOS 異構算子切分",
+        "Phase-wise 通信感知映射",
+        "SRAM-DCIM 替代對比空白"
+      ],
+      "related": [
+        "gemini-hpca2024",
+        "streamdcim-2025",
+        "eta-apccas2025",
+        "gemini-dcim-adaptation"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "paper",
+      "source_file": "entries/papers/halo-25d-llm.md",
+      "sections": [
+        {
+          "heading": "研究瓶頸 (Bottleneck)",
+          "content": "- **單一技術不適用 Transformer**：靜態權重相乘（WSMM）與動態注意力相乘（DMM）的資料流特性截然不同；ReRAM 寫入高延遲、高能耗且會損壞單元，完全不適合頻繁寫入的 DMM。\n- **跨 Chiplet 通信主導延遲**：在 IMC chiplet 系統中，Network-on-Package (NoP) 通信可佔據總延遲高達 **62%**，若映射未考量通信拓撲，效能將被互連瓶頸吞噬。"
+        },
+        {
+          "heading": "核心解法 (Solution)",
+          "content": "- **異構 2.5D Chiplet 架構**：使用 ReRAM 模擬 IMC chiplet 專責處理靜態權重相乘（WSMM），同時以 CMOS systolic array FPU chiplet 處理動態矩陣相乘（DMM）、softmax 與除法等算子，規避 ReRAM 寫入代價。\n- **Phase-wise 通信感知映射**：利用約 73% 通信發生在同一 phase 內的特性，設計 branch-and-bound 與自訂 sequential placement 演算法，將 computing cluster 映射到 chiplet 網格以最小化 `volume × distance` 通信代價。"
+        },
+        {
+          "heading": "關鍵實驗數據",
+          "content": "- 相較 NVIDIA Jetson Orin Nano：最高達成 **972× latency** 與 **1600× energy** 改善。\n- 相較 SIAM（Chiplet IMC mapping 框架）：平均減少 **19% cost**、**11% NoP latency**，並提升 **8× 映射速度**。\n- 相較通用 Simulated Annealing：在同等 cost 下達成最高 **26× 速度** 提升。"
+        },
+        {
+          "heading": "可組合模組 (Combinable Modules)",
+          "content": "- **可抽離模組 1 — 靜態/動態算子異構切分**：可將「WSMM vs DMM」切分邏輯遷移至其他混合記憶體架構。\n- **可切入研究空白（Blind Spot）**：HALO 反對 IMC 執行 DMM 的論點僅基於 ReRAM 物理寫入代價，**全篇未對比 SRAM-based DCIM**，這為後續研究留下明確的切入點。"
+        },
+        {
+          "heading": "關聯條目",
+          "content": "- 與 `streamdcim-2025`、`eta-apccas2025` 互補：後兩者正面解決 CIM 執行動態計算時的寫入瓶頸，可填補 HALO 的 DCIM 對比空白。\n- 與 `gemini-hpca2024` 在 `gemini-dcim-adaptation` 中對比兩種不同的 Cost Model（HALO 的純通信模型 vs Gemini 的 Roofline 聯合模型）。"
+        }
+      ]
+    },
+    {
+      "id": "ouroboros-asplos2026",
+      "title": "Ouroboros: 晶圓級全 SRAM-CIM 與 Token 粒度流水線 LLM 推理架構",
+      "venue": "ASPLOS 2026",
+      "category": "Wafer-Scale / SRAM-CIM",
+      "tags": [
+        "wafer-scale",
+        "sram-cim",
+        "llm",
+        "token-grained-pipelining",
+        "miqp",
+        "kv-cache"
+      ],
+      "bottleneck_summary": "Wafer-scale 系統在序列長度不均時產生嚴重 pipeline bubble，且跨 die 通信存在 4× 以上懲罰與缺陷核心（defective core）限制。",
+      "solution_summary": "提出 Token-Grained Pipelining 消除 bubble，搭配分散式 KV Cache 管理與 MIQP 通信感知容錯核心映射。",
+      "combinable_modules": [
+        "Token-Grained Pipelining (TGP)",
+        "分散式動態 KV Cache 環形分配",
+        "MIQP 跨 Die 通信感知與容錯映射"
+      ],
+      "related": [
+        "gemini-hpca2024",
+        "scar-micro2024",
+        "nop-latency-hiding-synthesis"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "paper",
+      "source_file": "entries/papers/ouroboros-asplos2026.md",
+      "sections": [
+        {
+          "heading": "研究瓶頸 (Bottleneck)",
+          "content": "- **序列級流水線氣泡與 Buffer 爆炸**：傳統 sequence-level pipeline 因輸入/輸出長度不均導致 CIM 核心閒置，且需龐大激活緩衝區。\n- **層內與層間通信的根本衝突**：同一層 tile 聚集可減小 reduction 距離，卻拉長層間傳輸；交錯放置則導致層內 reduction 流量在 wafer 上跨越多個 reticle（跨 die 懲罰達 **4×** 以上），且必須繞過物理 defective core。"
+        },
+        {
+          "heading": "核心解法 (Solution)",
+          "content": "- **Token-Grained Pipelining (TGP)**：將流水線細化至單個 token 粒度，徹底消除序列長度不均造成的 bubble，並將激活 buffer 需求降低數千倍。\n- **分散式動態 KV Cache 管理**：透過多級位址轉譯（page table + bitmap + block register）與環形 head 分配，實現儲存與計算的時空分離。\n- **分層通信感知與容錯映射**：Inter-core 層面建立 **MIQP** 模型，同時納入 Manhattan 距離、output/reduction/gather 三類通信量、跨 die 懲罰與缺陷核心硬約束；Intra-core 層面則利用動態規劃（DP）最佳化 H-Tree 規約樹。"
+        },
+        {
+          "heading": "關鍵實驗數據",
+          "content": "- 在 13B LLM 模型上相較 SOTA 系統：平均吞吐提升 **4.1×**、能效提升 **4.2×**（峰值可達 **9.1× 吞吐 / 17× 能效**）。\n- 全權重、激活與 KV cache 皆駐留於一級 SRAM 內，徹底消除 HBM/DRAM 搬移。"
+        },
+        {
+          "heading": "可組合模組 (Combinable Modules)",
+          "content": "- **TGP 細粒度流水線**：可遷移至多 chiplet LLM 推理系統，緩解異構或長短句混合時的負載不均。\n- **MIQP 跨區懲罰建模**：其 `Penalty(n1, n2)` 抽象可直接對照 2.5D interposer 中片內 NoC 與跨 chiplet NoP 的代價差異。"
+        },
+        {
+          "heading": "關聯條目",
+          "content": "- 與 `scar-micro2024`、`nop-latency-hiding-synthesis` 共同探討如何透過細粒度調度消除系統級停頓（stall / bubble）。\n- 與 `gemini-hpca2024` 分別代表「精確數學規劃 (MIQP)」與「啟發式退火 (SA)」兩種跨核映射路線。"
+        }
+      ]
+    },
+    {
+      "id": "pics-tcad2026",
+      "title": "PICS: 支援跨層調度的光學互連 Chiplet DNN 加速器",
+      "venue": "IEEE TCAD 2026",
+      "category": "Interconnect & Scheduling",
+      "tags": [
+        "chiplet",
+        "photonic-interconnect",
+        "cross-layer-scheduling",
+        "broadcast",
+        "mapping"
+      ],
+      "bottleneck_summary": "傳統單播電氣 NoP 缺乏廣播與拓撲重構自由度，大幅限制了 cross-layer scheduling 隱藏跨 chiplet 通信延遲的空間。",
+      "solution_summary": "結合可重構光學互連（支援廣播）、Memory-aware 圖切分、細粒度層間調度與 Output-centric 映射。",
+      "combinable_modules": [
+        "Memory-Aware 圖切分",
+        "Output-Centric 本地累加映射",
+        "廣播感知與 Layer-Group 重構"
+      ],
+      "related": [
+        "scar-micro2024",
+        "comet-hpca2026",
+        "nop-latency-hiding-synthesis"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "paper",
+      "source_file": "entries/papers/pics-tcad2026.md",
+      "sections": [
+        {
+          "heading": "研究瓶頸 (Bottleneck)",
+          "content": "- **互連架構限制調度自由度**：若底層 NoP 僅支援普通 unicast，且缺乏 multicast、flow priority 或拓撲重構能力，上層 scheduler 即使有優異的 cross-layer 排程也無法有效消除通信停滯。\n- **跨 Chiplet Partial-Sum 搬移開銷**：頻繁跨互連交換 partial sum 會抵銷片上權重重用的優勢。"
+        },
+        {
+          "heading": "核心解法 (Solution)",
+          "content": "- **Memory-Aware 圖切分**：將 DNN DAG 切分為符合 global buffer 容量的子圖，避免逐層寫回外部 DRAM。\n- **細粒度 Interlayer Scheduling**：使用 Simulated Annealing 與 group/split 算子，同時最佳化 temporal layer grouping 與 spatial chiplet 分配，並僅在 layer group 切換時重構互連。\n- **Output-Centric Intra-Layer 映射**：盡量將同一輸出的 partial-sum 累加留在本地 chiplet，同時利用光學廣播進行 input/weight multicast。"
+        },
+        {
+          "heading": "關鍵實驗數據",
+          "content": "- 發表於 IEEE TCAD Vol. 45, Issue 5 (May 2026)，DOI: `10.1109/TCAD.2025.3593438`。\n- 透過「高頻寬廣播互連 + Output-centric 映射 + Layer-group 排程」三者協同，顯著降低 DRAM 流量與跨 chiplet 通信延遲。"
+        },
+        {
+          "heading": "可組合模組 (Combinable Modules)",
+          "content": "- **Output-Centric 映射原則**：對於 Weight-Stationary DCIM chiplet 極具價值——若讓 partial-sum 留在本地累加，可避免跨 interposer 交換吃掉 WS 的能效紅利。\n- **Layer-Group 級重構抽象**：對應到電氣 NoP 時，可轉化為僅在窗口切換時調整虛擬通道或路由優先權。"
+        },
+        {
+          "heading": "關聯條目",
+          "content": "- 與 `scar-micro2024`、`comet-hpca2026` 共同構成 `nop-latency-hiding-synthesis` 的三大系統調度支柱。"
+        }
+      ]
+    },
+    {
+      "id": "scar-micro2024",
+      "title": "SCAR: 異構 2.5D MCM 多模型 AI 工作負載調度框架",
+      "venue": "IEEE/ACM MICRO 2024",
+      "category": "Multi-Model Scheduling",
+      "tags": [
+        "chiplet",
+        "mcm",
+        "scheduling",
+        "nop",
+        "latency-hiding",
+        "multi-model"
+      ],
+      "bottleneck_summary": "多模型工作負載在異構 2.5D MCM 上執行時，傳統固定分區造成部分計算單元長期等待跨 interposer 資料而停滯。",
+      "solution_summary": "引入 Time Window 與 Segment 兩級時間切分，搭配動態 Chiplet 重組（Dynamic Regrouping）與跨層/跨模型流水線重疊。",
+      "combinable_modules": [
+        "Time Window + Segment 兩級調度",
+        "動態 Chiplet 重組 (Dynamic Regrouping)",
+        "Stall 最小化目標函數"
+      ],
+      "related": [
+        "pics-tcad2026",
+        "ouroboros-asplos2026",
+        "nop-latency-hiding-synthesis"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "paper",
+      "source_file": "entries/papers/scar-micro2024.md",
+      "sections": [
+        {
+          "heading": "研究瓶頸 (Bottleneck)",
+          "content": "- **固定分區與同質假設失效**：傳統 MCM 加速器假設同質 chiplet 與靜態資料流，面對多模型並發（如資料中心多租戶、AR/VR 多任務）時，各模型不同的資料流與通信需求會導致嚴重的 critical path 停滯。\n- **跨 Interposer 通信暴露於關鍵路徑**：若無法與本地計算重疊，NoP 延遲將直接轉化為全系統閒置時間。"
+        },
+        {
+          "heading": "核心解法 (Solution)",
+          "content": "- **Time Window 與 Segment 雙層抽象**：將執行時間切分為 package-level 的 `Time Window`，內部再細分為可跨 chiplet 流水線執行的 `Segment`（區分計算段與通信段）。\n- **Inter-Layer / Inter-Model Pipelining**：目標並非讓通信消失，而是最佳化 $\\sum \\max(0, T_{\\text{comm}} - T_{\\text{overlap}})$，讓通信發生在其他 chiplet 仍有計算可做的區間。\n- **Dynamic Chiplet Regrouping**：允許在不同 time window 動態重新分配 chiplet 群組，避免固定分區造成局部資源飢餓。"
+        },
+        {
+          "heading": "關鍵實驗數據",
+          "content": "- 發表於 57th IEEE/ACM MICRO 2024（UC Irvine），DOI: `10.1109/MICRO61859.2024.00049`。\n- 顯式將 `BWnop`、`Szdata`、`nhops` 與 NoP 衝突懲罰納入調度代價模型，有效隱藏跨 chiplet 通信延遲。"
+        },
+        {
+          "heading": "可組合模組 (Combinable Modules)",
+          "content": "- **Window + Dynamic Regrouping 機制**：可直接改寫為 multi-DCIM triplet 排程器，在時間軸上錯開高頻寬 NoP burst。\n- **Overlap-Aware Stall 目標函數**：能與 `ouroboros-asplos2026` 的細粒度流水線互補，同時處理單模型長短不一與多模型並發場景。"
+        },
+        {
+          "heading": "關聯條目",
+          "content": "- 在 `nop-latency-hiding-synthesis` 中負責「時間維度錯峰與動態重組」的核心機制。\n- 與 `pics-tcad2026` 同樣關注如何透過跨層排程掩蓋 interposer 通信代價。"
+        }
+      ]
+    },
+    {
+      "id": "streamdcim-2025",
+      "title": "StreamDCIM: 支援 Mixed-Stationary 跨層流水線的數位 CIM 加速器",
+      "venue": "arXiv:2502.05798 (2025)",
+      "category": "Digital CIM / Dataflow",
+      "tags": [
+        "dcim",
+        "mixed-stationary",
+        "ping-pong",
+        "weight-rewrite",
+        "multimodal-transformer"
+      ],
+      "bottleneck_summary": "傳統 DCIM 僅支援單一 Weight-Stationary，且切換層時 SRAM 權重重寫（weight rewriting）延遲佔總延遲高達 88.9%。",
+      "solution_summary": "設計可重配置 TBR-CIM macro 實現 Mixed-Stationary 資料流，並以 tile 級 Ping-Pong 計算/重寫流水線隱藏重寫延遲。",
+      "combinable_modules": [
+        "TBR-CIM 雙模式 Macro",
+        "Mixed-Stationary 跨 Tile 轉發",
+        "Ping-Pong 計算與重寫重疊"
+      ],
+      "related": [
+        "halo-25d-llm",
+        "gemini-hpca2024",
+        "eta-apccas2025",
+        "gemini-dcim-adaptation"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "paper",
+      "source_file": "entries/papers/streamdcim-2025.md",
+      "sections": [
+        {
+          "heading": "研究瓶頸 (Bottleneck)",
+          "content": "- **權重重寫（Weight Rewriting）主導延遲**：DCIM 切換神經網路層時，必須將新權重寫入 SRAM array。在 ViLBERT 的 $QK^T$ 等動態場景下，rewriting 延遲佔總延遲高達 **88.9%**。\n- **三大僵化限制**：靜態 CIM 難適應動態 token pruning、純 Weight-Stationary (WS) 限制 tile 間並行性、粗粒度 layer-level pipeline 無法遮蔽寫入延遲。"
+        },
+        {
+          "heading": "核心解法 (Solution)",
+          "content": "- **Tile-based Reconfigurable CIM Macro (TBR-CIM)**：單一 macro 支援 normal mode 與 hybrid reconfigurable mode，能同時持有靜態權重與動態輸入。\n- **Mixed-Stationary Cross-forwarding Dataflow**：打破純 WS 限制，讓部分計算維持 WS（如 $I_X W_Q$），而動態輸入運算透過 cross-forwarding 直接將前一個 tile 的輸出流向下一 tile。\n- **Ping-Pong 細粒度計算-重寫流水線**：某 tile 完成計算後立即釋放進行下一組權重重寫，同時其他 tile 繼續計算，將 88.9% 的重寫延遲幾乎完全隱藏於計算中。"
+        },
+        {
+          "heading": "關鍵實驗數據",
+          "content": "- 製程與規格：28nm、200MHz、面積 67.3 mm²、功耗 3.08 W（ViLBERT-base/large, INT16）。\n- 相較 non-streaming parallel baseline：幾何平均 **2.63× speedup**。\n- 相較 layer-based streaming baseline：幾何平均 **1.28× speedup**。"
+        },
+        {
+          "heading": "可組合模組 (Combinable Modules)",
+          "content": "- **Weight Rewrite Cost 模型**：提醒所有 multi-DCIM mapping 框架（如 `gemini-hpca2024`）必須在延遲模型中加入 rewrite time。\n- **編譯期靜態 Ping-Pong 調度**：tile 釋放與重寫時機具有高度確定性，可直接交由 compiler 靜態規劃。"
+        },
+        {
+          "heading": "關聯條目",
+          "content": "- 在 `gemini-dcim-adaptation` 中作為關鍵補丁，為 `gemini-hpca2024` 補充 DCIM 專屬的權重重寫代價與 ping-pong 隱藏公式。\n- 與 `eta-apccas2025` 共同聚焦「如何重疊 CIM 的寫入與計算」。"
+        }
+      ]
+    }
+  ],
+  "syntheses": [
+    {
+      "id": "gemini-dcim-adaptation",
+      "title": "將 Gemini 映射框架適配至 Multi-DCIM Chiplet 系統",
+      "category": "架構融合 (Architecture Synthesis)",
+      "tags": [
+        "gemini",
+        "dcim",
+        "weight-rewrite",
+        "mapping",
+        "cost-model",
+        "ping-pong"
+      ],
+      "source_papers": [
+        "gemini-hpca2024",
+        "streamdcim-2025",
+        "halo-25d-llm",
+        "eta-apccas2025"
+      ],
+      "bottleneck_summary": "Gemini 等通用加速器映射框架忽略了 DCIM 切換層時高達 88.9% 的權重重寫延遲，而 HALO 又完全未評估 SRAM-DCIM 路線。",
+      "solution_summary": "保留 Gemini 的 LMS+SA 跨核搜索骨架，將核內 Timeloop 簡化為查表，並於 Cost Model 新增 Weight Rewrite Cost 與 Ping-Pong 隱藏項。",
+      "related": [
+        "gemini-hpca2024",
+        "streamdcim-2025",
+        "halo-25d-llm",
+        "eta-apccas2025"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "synthesis",
+      "source_file": "entries/syntheses/gemini-dcim-adaptation.md",
+      "sections": [
+        {
+          "heading": "組合動機與研究缺口",
+          "content": "- `gemini-hpca2024` 提供了強大的 Layer-Pipeline Spatial Mapping 搜尋框架，但其目標硬體是具備豐富資料流自由度的通用 DNN chiplet（Eyeriss-like core）。\n- `halo-25d-llm` 雖然針對 IMC chiplet，卻只考量 Analog ReRAM 並完全略過 SRAM-based DCIM，且其 Cost Model 僅計算純通信代價。\n- `streamdcim-2025` 證實 DCIM 切換層時的 SRAM 權重重寫延遲在未最佳化前佔總延遲高達 **88.9%**，因此任何 Multi-DCIM 映射框架都必須顯式建模重寫代價。"
+        },
+        {
+          "heading": "融合架構設計",
+          "content": "1. **沿用（來自 `gemini-hpca2024`）**：完整的 **LMS 三元組編碼（Part / CG / FD）** 與 **OP1–OP5 SA 算子**——這部分屬於跨核拓撲最佳化，與底層運算單元無關，可直接決定 NoC 與 D2D 流量分布。\n2. **簡化（針對 DCIM 特性）**：DCIM macro 預設為固定 Weight-Stationary 且計算延遲為常數，因此原本耗時的 Intra-core Evaluator 可退化為**查表模型**（輸入 array size 與精度即得 MVM 延遲與能耗）。\n3. **新增（來自 `streamdcim-2025` 與 `eta-apccas2025`）**：\n   - 在延遲模型加入 $D_{\\text{core}} = \\max(D_{\\text{compute}}, D_{\\text{rewrite\\_effective}})$，其中 $D_{\\text{rewrite\\_effective}}$ 為扣除 ping-pong 重疊後的暴露重寫時間。\n   - 可選擇性引入 `eta-apccas2025` 的 Array-aware 水平拼接作為前處理，減少所需 DCIM macro 數量。"
+        },
+        {
+          "heading": "新論文切入點 (Research Opportunity)",
+          "content": "- **題目方向**：*Rewrite- and Communication-Aware Spatial-Temporal Mapping for Multi-DCIM Chiplet Accelerators*。\n- **核心驗證**：在相同的 Transformer 工作負載下，對比 `halo-25d-llm`（ReRAM + CMOS 異構）與本融合架構（Multi-DCIM + Rewrite-Aware Mapping），正式填補 HALO 留下的 SRAM-DCIM 對比空白。"
+        }
+      ]
+    },
+    {
+      "id": "nop-latency-hiding-synthesis",
+      "title": "2.5D Chiplet NoP 延遲隱藏與系統級跨層調度融合方案",
+      "category": "調度融合 (Scheduling Synthesis)",
+      "tags": [
+        "nop",
+        "latency-hiding",
+        "scheduling",
+        "chiplet",
+        "dma",
+        "pipelining"
+      ],
+      "source_papers": [
+        "scar-micro2024",
+        "pics-tcad2026",
+        "comet-hpca2026",
+        "ouroboros-asplos2026"
+      ],
+      "bottleneck_summary": "單靠空間映射無法消除跨 chiplet 突發流量造成的 NoP 擁塞、小包 DMA 協議開銷與序列不均引起的計算停頓。",
+      "solution_summary": "融合 SCAR 的動態窗口重組、PICS 的 Output-Centric 本地累加、Ouroboros 的 Token 粒度流水線與 COMET 的 DMA 請求聚合。",
+      "related": [
+        "scar-micro2024",
+        "pics-tcad2026",
+        "comet-hpca2026",
+        "ouroboros-asplos2026"
+      ],
+      "last_updated": "2026-11-17",
+      "kind": "synthesis",
+      "source_file": "entries/syntheses/nop-latency-hiding-synthesis.md",
+      "sections": [
+        {
+          "heading": "組合動機與研究缺口",
+          "content": "在多 chiplet 系統中，「通信延遲隱藏」並非單一演算法能解決，而是橫跨 **系統排程、空間映射、互連拓撲與微觀 DMA 傳輸** 四個層次的協同問題：\n- `scar-micro2024` 擅長宏觀的時間窗口（Time Window）與動態 chiplet 重組，但未細化到微觀 DMA 協議開銷。\n- `comet-hpca2026` 精準解決了 < 1MB 小 DMA 請求的協議與排隊瓶頸，但缺乏多模型跨層重組視角。\n- `pics-tcad2026` 與 `ouroboros-asplos2026` 分別提供了 Output-centric 本地累加與 Token 級流水線，能從源頭減少跨界流量與氣泡。"
+        },
+        {
+          "heading": "融合架構設計",
+          "content": "1. **微觀級（來自 `ouroboros-asplos2026`）**：以 Token-Grained Pipelining 取代粗粒度 sequence-level 排程，消除長短序列混跑時的 pipeline bubble。\n2. **時間與拓撲級（來自 `scar-micro2024` + `pics-tcad2026`）**：以 SCAR 的 `Time Window + Dynamic Regrouping` 在時間軸錯開 NoP burst，並套用 PICS 的 `Output-Centric` 原則將 partial-sum 累加鎖定在本地 chiplet。\n3. **傳輸協議級（來自 `comet-hpca2026`）**：將同一視窗內跨 chiplet 的零碎 PE 激活傳輸送入 DMA Coalescing 單元合併為大批量傳輸，並依 CNN/Transformer 特性調整記憶體對齊方式。"
+        },
+        {
+          "heading": "新論文切入點 (Research Opportunity)",
+          "content": "- **題目方向**：*Full-Stack NoP Latency Hiding: Bridging Token-Level Pipelining, Dynamic Regrouping, and DMA Coalescing for 2.5D AI Chiplets*。\n- **量化目標**：以 SCAR 的 stall 目標函數 $\\sum \\max(0, T_{\\text{comm}} - T_{\\text{overlap}})$ 為主軸，整合 COMET 的 $\\alpha$-$\\beta$ UCIe 延遲模型進行端到端評估。"
+        }
+      ]
+    }
+  ]
+}
